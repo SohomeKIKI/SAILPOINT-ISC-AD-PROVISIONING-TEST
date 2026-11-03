@@ -266,3 +266,13 @@ All test runs generate persistent audit artifacts:
 - **JSON Audit Report**: `reports/test_report_<TIMESTAMP>.json` (machine-readable, complete API request/response metadata).
 - **Markdown Summary**: `reports/test_summary_<TIMESTAMP>.md` (executive summary with status tables and validation checks).
 
+---
+
+## 11. Project Documentation
+
+Comprehensive documentation guides are available in the [`docs/`](docs/) directory:
+* [**Setup & Installation Guide**](docs/SETUP_GUIDE.md): Complete setup walkthrough from scratch for fresh machines (Windows, macOS, Linux) without requiring AI help.
+* [**API Endpoint Reference**](docs/API_ENDPOINTS.md): Exhaustive guide to all SailPoint ISC REST APIs used, headers, request bodies, sample responses, and search index nuances.
+* [**Workflow & Architecture Guide**](docs/WORKFLOW.md): Complete architecture diagrams, 9-step interactive flow, multi-tier validation hierarchy, and scenario execution sequence.
+
+
