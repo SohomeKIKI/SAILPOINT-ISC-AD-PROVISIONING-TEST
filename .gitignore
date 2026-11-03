@@ -1,0 +1,28 @@
+# Environment variables and secrets
+.env
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Output directories (keep structure, ignore generated contents)
+logs/*.log
+reports/*.json
+reports/*.csv
+reports/*.md
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
