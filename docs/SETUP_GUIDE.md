@@ -195,3 +195,4 @@ Every execution automatically generates timestamped artifacts:
 | `ModuleNotFoundError: No module named 'requests'` | Virtual environment not activated | Activate virtual environment (`.\venv\Scripts\Activate.ps1` or `source venv/bin/activate`) before running `pip install -r requirements.txt`. |
 | `Script execution is disabled on this system` (PowerShell) | PowerShell ExecutionPolicy | Run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process`. |
 | `No identity found matching '<query>'` | Identity not loaded in tenant | Press Enter at the search prompt to list all active test identities loaded in the tenant. |
+

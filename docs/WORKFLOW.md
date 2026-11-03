@@ -212,3 +212,4 @@ At the end of every execution:
 4. **Execution Log**:
    * Saved to: `logs/execution.log`.
    * Complete timestamped audit trail with all HTTP requests, status codes, and automatic token redaction.
+
