@@ -81,8 +81,9 @@ Verify installed packages:
 pip list
 ```
 You should see:
-* `requests` (HTTP API client)
+* `requests` (HTTP REST API client)
 * `python-dotenv` (Environment variable loader)
+* `openpyxl` (Enterprise analytical Excel workbook generator)
 
 ---
 
@@ -115,7 +116,7 @@ SAILPOINT_CLIENT_SECRET=YOUR_ACTUAL_CLIENT_SECRET_HERE
 
 ## 4. Verifying the Setup
 
-Run the included automated integration test suite to verify connectivity, authentication, and API endpoints:
+Run the included automated integration test suite to verify connectivity, authentication, API endpoints, and reporting:
 
 ```bash
 python -m unittest tests/test_integration.py
@@ -123,22 +124,25 @@ python -m unittest tests/test_integration.py
 
 Expected output:
 ```text
-........
+...........
 ----------------------------------------------------------------------
-Ran 8 tests in 10.500s
+Ran 11 tests in 15.000s
 
 OK
 ```
 
-All 8 tests validate:
+All 11 tests validate:
 1. OAuth 2.0 token acquisition (`/oauth/token`)
 2. Identity search API (`/v3/search`)
 3. Direct identity details lookup (`/beta/identities/{id}`)
 4. Identity Profile and Source retrieval (`/v3/identity-profiles`, `/v3/sources`)
 5. Profile Lifecycle States inspection (`/v3/identity-profiles/{id}/lifecycle-states`)
 6. Role search API
-7. Validation engine and Markdown/JSON audit report generators
-8. Account details and UI view formatters
+7. Multi-tier validation engine and Markdown/JSON/**Excel (.xlsx)** audit report generators
+8. Account details and UI view formatters (Images 1, 2, 3)
+9. Modular scenario registry and category mappings
+10. ExecutionContext runtime model and MenuManager dispatch
+11. Event fetching service with 3 options (Last 10, source-filtered, and all events)
 
 ---
 
@@ -149,15 +153,16 @@ All 8 tests validate:
 python main.py
 ```
 This guides you interactively through the 9 steps:
-1. Search and select an Identity (e.g. `Ava Ellis` or `Elijah Novak`).
-2. Review Identity Details card.
-3. Confirm Identity Profile (`Truist Employee Profile`).
-4. Display configured Lifecycle States (`preHire`, `active`, `skp`, `ear`, `loa`, `terminated`).
-5. Confirm target AD source (`AD_Demo_Source`).
-6. Select any scenario (`1-10`):
-   * Scenarios 1–8: Execute specific provisioning test (Create, Enable, Disable, Role, Termination, LOA, SKP, EAR).
-   * Scenario 9: Run complete lifecycle transition sequence.
-   * Option 10: Inspect Identity Details & Correlated Accounts on all sources.
+1. **Search & Select an Identity**: Search by name, email, or press Enter to list test users (e.g. `Ava Ellis` or `Yuki Reyes`).
+2. **Review Identity Details**: Clean identity overview card.
+3. **Confirm Identity Profile**: Defaults to linked profile (e.g. `Truist Employee Profile`).
+4. **Display Lifecycle States**: Configured states (`preHire`, `active`, `skp`, `ear`, `loa`, `terminated`).
+5. **Confirm Target Source**: Defaults to primary target (e.g. `AD_Demo_Source`).
+6. **Hierarchical Category Selection (Step 7)**:
+   * **Category 1: Account Management**: Create, Enable, Disable, and Unlock Target Accounts.
+   * **Category 2: Lifecycle State Management**: Active, Leave of Absence (LOA), Sabbatical (SKP), Emergency Access Removal (EAR), Termination, and Full Demo Sequence.
+   * **Category 3: Access & Entitlement Management**: Role Request with Source Alignment Validation.
+   * **Category 4: Identity & Account Inspection**: Identity Details, Correlated Accounts, Raw Source Attributes, and Event Attributes (with Last 10, Source Filter, and All Events).
 
 ### 5.2 Direct Account & Identity Inspection Mode
 Inspect an identity's correlated accounts across all sources and drill into raw source attributes:
@@ -166,7 +171,7 @@ python main.py --user "Ava Ellis" --view-accounts
 ```
 
 ### 5.3 Automated Headless Scenario Execution
-Execute a single scenario directly:
+Execute a single scenario directly using legacy numbers (1–10):
 ```bash
 # Run Sabbatical (SKP) scenario on Elijah Novak
 python main.py --user "Elijah Novak" --scenario 7
@@ -180,9 +185,10 @@ python main.py --user "Ava Ellis" --scenario 6
 ## 6. Output & Audit Reports
 
 Every execution automatically generates timestamped artifacts:
-* **Log file**: `logs/execution.log` (All HTTP calls, parameters, and statuses with sensitive tokens redacted).
-* **Machine-readable JSON Report**: `reports/test_report_<TIMESTAMP>.json`.
-* **Executive Markdown Report**: `reports/test_summary_<TIMESTAMP>.md`.
+* **Executive Analytical Excel Workbook**: `reports/test_report_<TIMESTAMP>.xlsx` (Corporate 5-tab report with zero emojis: Executive Summary, Scenario Master Log, Step-by-Step Audit, Verification Matrix, and Account Inventory).
+* **Executive Markdown Report**: `reports/test_summary_<TIMESTAMP>.md` (Human-readable summary).
+* **Machine-readable JSON Report**: `reports/test_report_<TIMESTAMP>.json` (Full audit raw data).
+* **Execution Log file**: `logs/execution.log` (All HTTP calls, parameters, and statuses with sensitive tokens redacted).
 
 ---
 
@@ -192,7 +198,7 @@ Every execution automatically generates timestamped artifacts:
 | :--- | :--- | :--- |
 | `AuthenticationError: HTTP 401 Unauthorized` | Invalid Client ID or Client Secret in `.env` | Regenerate Personal Access Token in SailPoint admin console and update `.env`. |
 | `AuthenticationError: HTTP 404 / Connection Error` | Incorrect `SAILPOINT_BASE_URL` | Ensure URL does not have a trailing slash (e.g. `https://<tenant>.api.identitynow.com`). |
-| `ModuleNotFoundError: No module named 'requests'` | Virtual environment not activated | Activate virtual environment (`.\venv\Scripts\Activate.ps1` or `source venv/bin/activate`) before running `pip install -r requirements.txt`. |
+| `ModuleNotFoundError: No module named 'requests'` / `'openpyxl'` | Packages not installed or virtual environment not activated | Activate virtual environment (`.\venv\Scripts\Activate.ps1` or `source venv/bin/activate`) and run `pip install -r requirements.txt`. |
 | `Script execution is disabled on this system` (PowerShell) | PowerShell ExecutionPolicy | Run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process`. |
 | `No identity found matching '<query>'` | Identity not loaded in tenant | Press Enter at the search prompt to list all active test identities loaded in the tenant. |
 
