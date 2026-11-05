@@ -202,3 +202,31 @@ Every execution automatically generates timestamped artifacts:
 | `Script execution is disabled on this system` (PowerShell) | PowerShell ExecutionPolicy | Run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process`. |
 | `No identity found matching '<query>'` | Identity not loaded in tenant | Press Enter at the search prompt to list all active test identities loaded in the tenant. |
 
+---
+
+## 8. Quick Setup Cheatsheet (TL;DR)
+
+For quick setup on any new machine:
+
+```bash
+# 1. Clone repository
+git clone https://github.com/SohomeKIKI/SAILPOINT-ISC-AD-PROVISIONING-TEST.git
+cd SAILPOINT-ISC-AD-PROVISIONING-TEST
+
+# 2. Create and activate virtual environment
+python -m venv venv
+.\venv\Scripts\Activate.ps1       # On Windows PowerShell (or 'source venv/bin/activate' on macOS/Linux)
+
+# 3. Install all dependencies (requests, python-dotenv, openpyxl)
+pip install -r requirements.txt
+
+# 4. Copy .env template and add your credentials
+Copy-Item .env.example .env       # (or 'cp .env.example .env' on macOS/Linux)
+# Edit .env with SAILPOINT_BASE_URL, CLIENT_ID, and CLIENT_SECRET
+
+# 5. Verify connectivity and API tests (all 11 tests)
+python -m unittest tests/test_integration.py
+
+# 6. Run the interactive automation tool
+python main.py
+```
