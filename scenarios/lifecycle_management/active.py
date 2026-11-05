@@ -122,3 +122,4 @@ def run_active_lifecycle(
 
     logger.info(f"=== Completed Scenario: {scenario_name} | Outcome: {report.final_status} ===")
     return report
+

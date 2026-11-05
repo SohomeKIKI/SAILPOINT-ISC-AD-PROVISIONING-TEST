@@ -55,3 +55,4 @@ class ViewCorrelatedAccountsScenario(BaseScenario):
             "details": f"Found and displayed {len(accounts)} correlated account(s) for '{ctx.identity_name}'.",
         })
         return report
+

@@ -49,3 +49,4 @@ class ViewIdentityDetailsScenario(BaseScenario):
             "details": f"Successfully retrieved and displayed Identity record for '{ctx.identity_name}'.",
         })
         return report
+

@@ -138,3 +138,4 @@ def run_create_account(
 
     logger.info(f"=== Completed Scenario: {scenario_name} | Outcome: {report.final_status} ===")
     return report
+

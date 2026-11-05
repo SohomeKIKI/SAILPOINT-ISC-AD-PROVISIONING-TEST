@@ -122,3 +122,4 @@ registry = ScenarioRegistry()
 def register_scenario(cls: Type[BaseScenario]) -> Type[BaseScenario]:
     """Decorator to register a scenario with the global registry."""
     return registry.register(cls)
+

@@ -140,6 +140,18 @@ class ReportGenerator:
         logger.info(f"Markdown test report generated: {target_path}")
         return target_path
 
+    def generate_excel_report(self) -> Path:
+        """Generate an executive-grade analytical Excel (.xlsx) audit report for leadership review."""
+        from reporting.excel_report_generator import AnalyticalExcelReportGenerator
+        generator = AnalyticalExcelReportGenerator(
+            records=self.records,
+            session_start=self.session_start,
+            session_end=datetime.now(),
+            tenant_url=settings.base_url,
+            reports_dir=settings.reports_dir,
+        )
+        return generator.generate()
+
     def print_console_summary(self) -> None:
         """Print a formatted summary table to stdout."""
         print("\n" + "=" * 80)

@@ -100,8 +100,19 @@ class TestSailPointADAutomation(unittest.TestCase):
         rg.add_record(item)
         json_file = rg.generate_json_report()
         md_file = rg.generate_markdown_summary()
+        excel_file = rg.generate_excel_report()
         self.assertTrue(json_file.exists())
         self.assertTrue(md_file.exists())
+        self.assertTrue(excel_file.exists())
+        self.assertEqual(excel_file.suffix, ".xlsx")
+
+        # Verify all 5 sheets exist in the Excel workbook
+        import openpyxl
+        wb = openpyxl.load_workbook(excel_file)
+        self.assertEqual(
+            wb.sheetnames,
+            ["Executive Summary", "Scenario Master Log", "Step-by-Step Audit", "Verification Matrix", "Account Inventory"]
+        )
 
     def test_08_account_details_and_views(self):
         """Milestone 12: Test detailed account retrieval and UI view formatters."""

@@ -50,3 +50,4 @@ class BaseScenario(ABC):
     def execute(self, ctx: ExecutionContext) -> TestReportItem:
         """Execute the test scenario and return a populated TestReportItem."""
         pass
+

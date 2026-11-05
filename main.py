@@ -342,12 +342,14 @@ def main():
     # Final reporting
     if report_generator.records:
         report_generator.print_console_summary()
+        excel_path = report_generator.generate_excel_report()
         json_path = report_generator.generate_json_report()
         md_path = report_generator.generate_markdown_summary()
         print(f"Audit reports generated:")
-        print(f"  JSON     : {json_path}")
-        print(f"  Markdown : {md_path}")
-        print(f"  Logs     : {settings.logs_dir / 'execution.log'}")
+        print(f"  Excel (Executive) : {excel_path}")
+        print(f"  Markdown Summary  : {md_path}")
+        print(f"  JSON (Audit Raw)  : {json_path}")
+        print(f"  Logs              : {settings.logs_dir / 'execution.log'}")
     else:
         print("No test scenarios were executed in this session.")
 

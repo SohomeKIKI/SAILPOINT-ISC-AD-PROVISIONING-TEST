@@ -2,3 +2,6 @@
 requests>=2.31.0
 python-dotenv>=1.0.0
 
+# Enterprise Reporting and Analytical Exports
+openpyxl>=3.1.2
+

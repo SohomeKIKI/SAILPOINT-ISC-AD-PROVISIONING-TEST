@@ -19,6 +19,7 @@ logs/*.log
 reports/*.json
 reports/*.csv
 reports/*.md
+reports/*.xlsx
 
 # IDE and OS files
 .vscode/

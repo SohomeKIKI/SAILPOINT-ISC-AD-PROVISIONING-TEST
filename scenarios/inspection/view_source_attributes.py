@@ -66,3 +66,4 @@ class ViewSourceAttributesScenario(BaseScenario):
             "details": f"Successfully displayed raw attributes for account on '{ctx.source_name}'.",
         })
         return report
+

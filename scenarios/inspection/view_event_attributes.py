@@ -118,3 +118,4 @@ class ViewEventAttributesScenario(BaseScenario):
             for k, v in sorted(attrs.items()):
                 print(f"      - {k}: {v}")
         print("=" * 80 + "\n")
+

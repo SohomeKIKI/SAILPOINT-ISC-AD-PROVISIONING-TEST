@@ -121,3 +121,4 @@ def run_leave_of_absence(
 
     logger.info(f"=== Completed Scenario: {scenario_name} | Outcome: {report.final_status} ===")
     return report
+

@@ -114,3 +114,4 @@ def run_full_lifecycle_demo(
     composite_report.resulting_lifecycle_state = "terminated"
     logger.info(f"=== Completed Full Lifecycle Demonstration | Outcome: {composite_report.final_status} ===")
     return composite_report
+

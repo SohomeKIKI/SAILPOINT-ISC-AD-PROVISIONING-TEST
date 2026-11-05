@@ -116,3 +116,4 @@ class MenuManager:
 
         input("\nPress [ENTER] to continue...")
         return report_item
+

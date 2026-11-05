@@ -138,3 +138,4 @@ def run_emergency_access_removal(
 
     logger.info(f"=== Completed Scenario: {scenario_name} | Outcome: {report.final_status} ===")
     return report
+
