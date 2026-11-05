@@ -5,3 +5,6 @@ python-dotenv>=1.0.0
 # Enterprise Reporting and Analytical Exports
 openpyxl>=3.1.2
 
+# Architecture & Specification PDF Generation
+reportlab>=4.0.0
+

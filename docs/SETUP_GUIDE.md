@@ -84,6 +84,7 @@ You should see:
 * `requests` (HTTP REST API client)
 * `python-dotenv` (Environment variable loader)
 * `openpyxl` (Enterprise analytical Excel workbook generator)
+* `reportlab` (Vector PDF document and flowchart generator)
 
 ---
 
