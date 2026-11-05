@@ -30,17 +30,28 @@ sailpoint_ad_automation/
 ├── requirements.txt                  # Python dependencies (requests, python-dotenv)
 ├── README.md                         # Project documentation and user guide
 │
+├── core/                             # Generic Extensibility Framework
+│   ├── base_scenario.py             # BaseScenario abstract class
+│   ├── context.py                   # ExecutionContext runtime model
+│   ├── registry.py                  # Dynamic ScenarioRegistry with auto-discovery
+│   └── menu_manager.py              # 2-Tier Hierarchical Interactive Menu & Dispatch
+│
+├── scenarios/                        # Domain-Isolated Test Scenario Modules
+│   ├── account_management/          # Create, Enable, Disable, Unlock
+│   ├── lifecycle_management/        # Active, LOA, SKP, EAR, Termination, Full Demo
+│   ├── access_management/           # Role Request with Source Alignment
+│   └── inspection/                  # Identity Details, Correlated Accounts, Raw & Event Attributes
+│
+├── test_scenarios/                   # Backward-compatibility shims forwarding to scenarios/
+│
 ├── config/
-│   ├── __init__.py                   # Package initializer
 │   ├── settings.py                   # Central environment variables & path resolver
 │   └── constants.py                  # Lifecycle states, API endpoints, and metadata
 │
 ├── authentication/
-│   ├── __init__.py                   # Package initializer
 │   └── auth_client.py                # OAuth 2.0 Client Credentials token management
 │
 ├── sailpoint/
-│   ├── __init__.py                   # Package initializer
 │   ├── api_client.py                 # Central HTTP client (retries, rate limiting, logging)
 │   ├── identity.py                   # Identity search, retrieval, and attribute parsing
 │   ├── identity_profiles.py          # Identity profile & lifecycle states retrieval
@@ -50,30 +61,16 @@ sailpoint_ad_automation/
 │   ├── roles.py                      # Role search and source alignment verification
 │   └── access_requests.py            # Access request submission and status polling
 │
-├── test_scenarios/
-│   ├── __init__.py                   # Package initializer
-│   ├── create_account.py             # Create Account test handler
-│   ├── enable_account.py             # Enable Account test handler
-│   ├── disable_account.py            # Disable Account test handler
-│   ├── role_request.py               # Interactive Role Request subflow handler
-│   ├── termination.py                # Termination scenario (explicit safety prompt)
-│   ├── leave_of_absence.py           # LOA scenario handler
-│   ├── skp.py                        # Sabbatical (SKP) scenario handler
-│   └── emergency_access_removal.py   # EAR scenario handler (explicit safety prompt)
-│
 ├── validation/
-│   ├── __init__.py                   # Package initializer
 │   ├── identity_validation.py        # Identity existence, attributes, and lifecycle state checks
 │   ├── account_validation.py         # Account existence and enabled/disabled state checks
 │   └── provisioning_validation.py    # Downstream account activity (/beta/account-activities)
 │
 ├── reporting/
-│   ├── __init__.py                   # Package initializer
 │   ├── logger.py                     # Console & file logger with sensitive data redaction
 │   └── report_generator.py           # JSON and Markdown test execution reports
 │
 ├── ad_connector/
-│   ├── __init__.py                   # Package initializer
 │   └── ad_client.py                  # Direct Active Directory abstraction (decoupled)
 │
 ├── logs/                             # Output directory for execution logs

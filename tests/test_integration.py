@@ -128,6 +128,73 @@ class TestSailPointADAutomation(unittest.TestCase):
         self.assertIn("SOURCE ACCOUNT:", acc_view)
         self.assertIn("Raw Source Attributes", acc_view)
 
+    def test_09_modular_registry_and_categories(self):
+        """Milestone 13: Test dynamic modular scenario registry and categories."""
+        import scenarios
+        from core.registry import registry
+
+        # Verify all 4 categories exist
+        categories = registry.get_categories()
+        category_ids = [c[0] for c in categories]
+        self.assertIn("account_management", category_ids)
+        self.assertIn("lifecycle_management", category_ids)
+        self.assertIn("access_management", category_ids)
+        self.assertIn("inspection", category_ids)
+
+        # Verify scenarios are registered under each category
+        acc_scenarios = registry.get_scenarios_for_category("account_management")
+        lc_scenarios = registry.get_scenarios_for_category("lifecycle_management")
+        acc_sc_ids = [s.scenario_id for s in acc_scenarios]
+        lc_sc_ids = [s.scenario_id for s in lc_scenarios]
+
+        self.assertIn("account.create", acc_sc_ids)
+        self.assertIn("account.enable", acc_sc_ids)
+        self.assertIn("account.disable", acc_sc_ids)
+        self.assertIn("account.unlock", acc_sc_ids)
+
+        self.assertIn("lifecycle.active", lc_sc_ids)
+        self.assertIn("lifecycle.loa", lc_sc_ids)
+        self.assertIn("lifecycle.skp", lc_sc_ids)
+        self.assertIn("lifecycle.ear", lc_sc_ids)
+        self.assertIn("lifecycle.termination", lc_sc_ids)
+        self.assertIn("lifecycle.full_demo", lc_sc_ids)
+
+        # Verify legacy number lookups
+        self.assertEqual(registry.get_scenario_by_legacy_number(1).scenario_id, "account.create")
+        self.assertEqual(registry.get_scenario_by_legacy_number(6).scenario_id, "lifecycle.loa")
+        self.assertEqual(registry.get_scenario_by_legacy_number(10).scenario_id, "inspection.view_accounts")
+
+    def test_10_execution_context_and_menu_manager(self):
+        """Milestone 14: Test ExecutionContext and MenuManager structure."""
+        from core.context import ExecutionContext
+        from core.menu_manager import MenuManager
+        from core.registry import registry
+
+        dummy_identity = {
+            "id": "test-id",
+            "name": "yuki.nagato",
+            "displayName": "Yuki Nagato",
+            "email": "yuki@example.com",
+            "lifecycleState": "active",
+        }
+        dummy_source = {"id": "src-ad", "name": "AD_Demo_Source"}
+
+        ctx = ExecutionContext(
+            identity=dummy_identity,
+            source=dummy_source,
+            profile_id="prof-123",
+            interactive=False,
+            force_confirmed=True,
+        )
+
+        self.assertEqual(ctx.identity_name, "Yuki Nagato")
+        self.assertEqual(ctx.identity_id, "test-id")
+        self.assertEqual(ctx.source_name, "AD_Demo_Source")
+        self.assertEqual(ctx.current_lifecycle_state, "active")
+
+        menu = MenuManager(ctx)
+        self.assertIsNotNone(menu.ctx)
+
 
 if __name__ == "__main__":
     unittest.main()

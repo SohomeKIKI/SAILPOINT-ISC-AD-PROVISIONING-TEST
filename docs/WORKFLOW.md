@@ -14,22 +14,23 @@ flowchart TD
     D --> E["Step 3: Identity Profile Selection (/v3/identity-profiles)"]
     E --> F["Step 4 & 5: Retrieve Configured Lifecycle States (/lifecycle-states)"]
     F --> G["Step 6: Target AD Provisioning Source (/v3/sources)"]
-    G --> H{"Step 7: Choose Test Scenario"}
+    G --> H{"Step 7: Choose Scenario Category"}
 
-    H -->|Scenario 1-3, 5-8| I["Lifecycle State / Account API Execution"]
-    H -->|Scenario 4| J["Role Search & Source Alignment Sub-Flow"]
-    H -->|Scenario 9| K["Run Full Lifecycle Demo Sequence"]
-    H -->|Option 10| L["Inspect Identity Details & Correlated Accounts"]
+    H -->|Category 1| CAT1["Account Management<br>(Create, Enable, Disable, Unlock)"]
+    H -->|Category 2| CAT2["Lifecycle State Management<br>(Active, LOA, SKP, EAR, Termination, Full Demo)"]
+    H -->|Category 3| CAT3["Access & Entitlement Management<br>(Role Request with Source Alignment)"]
+    H -->|Category 4| CAT4["Identity & Account Inspection<br>(Identity Details, Correlated Accounts, Raw Attributes, Events)"]
 
-    I --> M["Step 9A: Poll Account Activity Task (/beta/account-activities)"]
-    J --> M
-    K --> M
+    CAT1 --> SCEN["Step 8: Execute Scenario via SailPoint REST APIs"]
+    CAT2 --> SCEN
+    CAT3 --> SCEN
+    CAT4 --> SCEN
 
+    SCEN --> M["Step 9A: Poll Account Activity Task (/beta/account-activities)"]
     M --> N["Step 9B: Verify Live Identity State (/beta/identities)"]
     N --> O["Step 9C: Verify Account Status on Target Source (/v3/accounts)"]
-    O --> P["Step 9D: Evaluate Downstream Provisioning"]
+    O --> P["Step 9D: Evaluate Downstream Provisioning Outcome"]
     P --> Q["Generate Timestamped Audit Reports (JSON & Markdown)"]
-    L --> H
     Q --> R{"Test Another Identity?"}
     R -->|Yes| C
     R -->|No| S["FINISH (Session Summary)"]
@@ -72,103 +73,106 @@ flowchart TD
 * **API**: `GET /v3/sources`
 * **Action**: Defaults to the user's primary source (`AD_Demo_Source`). Displays available Active Directory and delimited file sources if another source is requested.
 
-### Step 7: Prompt for Scenario / Use Case
-Presents the 10 available options:
+### Step 7: Prompt for Scenario Category & Scenario Selection
+Presents a 2-tier categorized menu managed by `MenuManager`:
+
 ```text
-  1. Create Account
-  2. Enable Account
-  3. Disable Account
-  4. Role Request (interactive sub-flow with source validation)
-  5. Termination (employmentTermination - requires confirmation)
-  6. Leave of Absence - LOA (loa)
-  7. Sabbatical - SKP (skp)
-  8. Emergency Access Removal - EAR (ear - requires confirmation)
-  9. Run All Lifecycle Transitions Demo (Active -> SKP -> LOA -> EAR -> Termination)
- 10. View Identity Details, Correlated Accounts & Source Attributes (Inspect UI Views)
-  0. Back / Finish Session
+================================================================================
+  [Step 7/9] TEST SCENARIO CATEGORY SELECTION
+  Target User   : Yuki Nagato (2c9180868f...)
+  Current State : active
+  Target Source : AD_Demo_Source
+================================================================================
+  [1] Account Management               - Create, Enable, Disable, and Unlock Target Accounts
+  [2] Lifecycle State Management       - Active, LOA, SKP, Termination, and Full Lifecycle Demo
+  [3] Access & Entitlement Management  - Role Requests with Source Validation and Entitlement Checks
+  [4] Identity & Account Inspection    - Identity Details, Correlated Accounts, and Raw Inbound Attributes
+  ------------------------------------------------------------------------------
+  [0] Back to Identity Selection / Finish Session
+================================================================================
 ```
+
+When a category is selected, the sub-menu presents the domain-isolated scenarios registered under that category.
 
 ---
 
-## 3. Scenario Execution Details
+## 3. Domain Categorization & Scenario Details
 
-### Scenario 1: Create Account
-1. Applies `active` state via `POST /v3/identities/{id}/set-lifecycle-state`.
-2. Checks if an account exists on target source; creates one if absent via `POST /v3/accounts`.
-3. Validates provisioning task completion and verifies resulting `active` state and account creation.
+### Category 1: Account Management
+* **`account.create` (Create Target Account)**: Applies `active` state and provisions a new AD account via `POST /v3/accounts` if not present.
+* **`account.enable` (Enable Account)**: Explicitly enables an existing AD account via `POST /v3/accounts/{id}/enable`.
+* **`account.disable` (Disable Account)**: Explicitly disables target account via `POST /v3/accounts/{id}/disable`.
+* **`account.unlock` (Unlock Account)**: Clears AD lockout flag by updating `userAccountControl` via `POST /v3/accounts/{id}/unlock`.
 
-### Scenario 2: Enable Account
-1. Applies `active` state to trigger onboarding/enable policy.
-2. Sends explicit enable request to target account via `POST /v3/accounts/{id}/enable` with `{"forceProvisioning": false}`.
-3. Validates task activity and verifies target account is enabled.
+### Category 2: Lifecycle State Management
+* **`lifecycle.active` (Active - Onboarding / Rehire)**: Applies `active` state and verifies standard AD account enablement.
+* **`lifecycle.loa` (Leave of Absence - LOA)**: Applies `loa` state and verifies downstream AD account suspension.
+* **`lifecycle.skp` (Sabbatical - SKP)**: Sabbatical abbreviation standardized project-wide as **`SKP`**. Applies `skp` state and verifies sabbatical policy enforcement while retaining attributes.
+* **`lifecycle.ear` (Emergency Access Removal - EAR)**: High-impact security transition requiring `EAR-CONFIRM` safety confirmation; disables account and revokes access.
+* **`lifecycle.termination` (Employment Termination)**: High-impact transition requiring `TERMINATE` safety confirmation; revokes access and disables/removes target account.
+* **`lifecycle.full_demo` (Full Lifecycle Demonstration)**: Executes the end-to-end sequential transition sequence: `Active` ➔ `SKP` ➔ `LOA` ➔ `EAR` ➔ `Termination`.
 
-### Scenario 3: Disable Account
-1. Applies configured disabled state (`loa` / `skp` / `ear`).
-2. Sends explicit disable request via `POST /v3/accounts/{id}/disable`.
-3. Validates task activity and verifies account status is disabled.
+### Category 3: Access & Entitlement Management
+* **`access.role_request` (Role Request with Source Alignment)**:
+  1. Searches tenant roles by keyword (`/v3/search` & `/v3/roles`).
+  2. Inspects role's access profiles and underlying provisioning source IDs.
+  3. Validates whether the role provisions to the tester's selected target source (warns tester on mismatch).
+  4. Submits access request via `POST /v3/access-requests`.
+  5. Polls `/beta/access-request-status` until completed.
 
-### Scenario 4: Role Request Sub-Flow
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Tester
-    participant App as Automation CLI
-    participant ISC as SailPoint ISC API
-    participant Src as Target AD Source
-
-    Tester->>App: Enter Role Name / Keyword
-    App->>ISC: POST /v3/search (Role index)
-    ISC-->>App: Return Matching Roles
-    App->>Tester: Display Matching Roles
-    Tester->>App: Select Role
-    App->>ISC: GET /v3/roles/{id}
-    ISC-->>App: Access Profiles & Source IDs
-    App->>App: Compare Role Sources with Target Source
-    alt Source Mismatch
-        App->>Tester: Display Warning Prompt
-    end
-    App->>ISC: POST /v3/access-requests (GRANT_ACCESS)
-    ISC-->>App: Access Request ID
-    App->>ISC: GET /v3/access-request-status (Poll every 3s)
-    ISC-->>App: Request Status: COMPLETE
-    App->>Tester: Display Verification Result
-```
-
-### Scenario 5: Employment Termination
-* **Safety Prompt**: Requires typing `TERMINATE` before continuing.
-* Applies `terminated` (or `employmentTermination`) state.
-* Verifies account is disabled or deprovisioned, and all entitlements are revoked.
-
-### Scenario 6: Leave of Absence (LOA)
-* Applies `loa` state.
-* Verifies downstream AD account is suspended/disabled while attributes are preserved.
-
-### Scenario 7: Sabbatical (SKP)
-* Sabbatical abbreviation standardized project-wide as **`SKP`**.
-* Applies `skp` state.
-* Validates task completion and verifies `lifecycleState.stateName == "skp"` with retained attributes.
-
-### Scenario 8: Emergency Access Removal (EAR)
-* High-impact security operation.
-* **Safety Prompt**: Requires explicit confirmation (`EAR-CONFIRM`). Restricted to non-production tenants.
-* Applies `ear` state and immediately disables target AD access.
-
-### Scenario 9: Full Lifecycle Transitions Demo
-Executes the sequential end-to-end lifecycle demonstration on the selected identity:
-`Active` ➔ `SKP` ➔ `LOA` ➔ `EAR` ➔ `Termination`
-
-### Option 10: Inspect UI Views & Correlated Accounts
-Displays:
-1. **Identity Details View** (Matches Image 1 in console).
-2. **Correlated Accounts Summary Table** (Matches Image 2).
-3. **Drill-down menu**:
-   * Enter a number (`1`, `2`, ...) to view raw source feed attributes for a specific account (Matches Image 3).
-   * Enter `A` to view all accounts sequentially.
-   * Enter `B` to return back to the scenario menu.
+### Category 4: Identity & Account Inspection
+* **`inspection.identity_details`**: Comprehensive identity model inspection (Identity Card, Attributes, Email, Lifecycle State).
+* **`inspection.view_accounts`**: Summary table of all correlated accounts (AD, Delimited, IdentityNow) and drill-down into raw attributes.
+* **`inspection.source_attributes`**: Direct inspection of the target source account's raw schema attributes.
+* **`inspection.event_attributes`**: Queries the SailPoint audit event trail via `POST /v3/search` with `indices: ["events"]` to inspect identity lifecycle changes and provisioning event attributes.
 
 ---
 
-## 4. Multi-Tier Validation Hierarchy (Step 9)
+## 4. Generic Modular Architecture & Adding New Scenarios
+
+The framework utilizes an extensible, decoupled architecture:
+
+```
+core/
+├── base_scenario.py     # BaseScenario abstract class
+├── context.py           # ExecutionContext (identity, source, profile, report_gen)
+├── registry.py          # ScenarioRegistry with dynamic auto-discovery
+└── menu_manager.py      # Two-tier hierarchical interactive navigation
+scenarios/
+├── account_management/  # Domain module
+├── lifecycle_management/# Domain module
+├── access_management/   # Domain module
+└── inspection/          # Domain module
+```
+
+### How to Add a New Test Scenario:
+1. Create a new file inside the appropriate domain folder (e.g. `scenarios/lifecycle_management/extended_leave.py`).
+2. Subclass `BaseScenario` and decorate with `@register_scenario`:
+```python
+from core.base_scenario import BaseScenario
+from core.context import ExecutionContext
+from core.registry import register_scenario
+from reporting.report_generator import TestReportItem
+
+@register_scenario
+class ExtendedLeaveScenario(BaseScenario):
+    scenario_id = "lifecycle.extended_leave"
+    name = "Extended Medical Leave"
+    category_id = "lifecycle_management"
+    category_name = "Lifecycle State Management"
+    description = "Apply extended medical leave state and suspend account"
+    expected_ad_outcome = "Suspend AD account"
+    order = 7
+
+    def execute(self, ctx: ExecutionContext) -> TestReportItem:
+        # Implementation logic here
+        ...
+```
+3. The new scenario will **automatically appear** in the CLI menu under the selected category without modifying `main.py` or any existing scenarios!
+
+---
+
+## 5. Multi-Tier Validation Hierarchy (Step 9)
 
 Every test scenario executes a 4-tier validation sequence:
 
@@ -199,7 +203,7 @@ Every test scenario executes a 4-tier validation sequence:
 
 ---
 
-## 5. Audit Logging & Reporting
+## 6. Audit Logging & Reporting
 
 At the end of every execution:
 1. **Console Summary**: Displays a clean summary table of all executed scenarios and their `SUCCESS` / `FAILURE` status.

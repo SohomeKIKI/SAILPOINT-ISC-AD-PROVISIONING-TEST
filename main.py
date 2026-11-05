@@ -27,14 +27,10 @@ from sailpoint.identity_profiles import (
     get_identity_profile,
 )
 from sailpoint.sources import get_sources, get_ad_sources
-from test_scenarios.create_account import run_create_account
-from test_scenarios.enable_account import run_enable_account
-from test_scenarios.disable_account import run_disable_account
-from test_scenarios.role_request import run_role_request
-from test_scenarios.termination import run_termination
-from test_scenarios.leave_of_absence import run_leave_of_absence
-from test_scenarios.skp import run_skp
-from test_scenarios.emergency_access_removal import run_emergency_access_removal
+import scenarios
+from core.context import ExecutionContext
+from core.registry import registry
+from core.menu_manager import MenuManager
 
 # Initialize application logger
 setup_logger(name="sailpoint_ad_automation", log_file="execution.log")
@@ -248,98 +244,36 @@ def run_scenario_flow(
     report_gen: Optional[ReportGenerator] = None,
 ) -> None:
     """Steps 7, 8, & 9: Select and execute an AD Provisioning scenario, then validate."""
-    while True:
-        print("[Step 7/9] Prompt for the Use Case / Test Scenario to Run")
-        print("=" * 80)
-        print("  1. Create Account")
-        print("  2. Enable Account")
-        print("  3. Disable Account")
-        print("  4. Role Request (interactive sub-flow with source validation)")
-        print("  5. Termination (employmentTermination - requires confirmation)")
-        print("  6. Leave of Absence - LOA (loa)")
-        print("  7. Sabbatical - SKP (skp)")
-        print("  8. Emergency Access Removal - EAR (ear - requires confirmation)")
-        print("  9. Run All Lifecycle Transitions Demo (Active -> SKP -> LOA -> EAR -> Termination)")
-        print(" 10. View Identity Details, Correlated Accounts & Source Attributes (Inspect UI Views)")
-        print("  0. Back / Finish Session")
-        print("=" * 80)
+    ctx = ExecutionContext(
+        identity=user,
+        source=source,
+        profile_id=profile_id,
+        report_generator=report_gen,
+        interactive=True,
+    )
 
-        if scenario_choice is None:
-            raw_input = input("Choose option [0-10]: ").strip()
-            try:
-                scen_num = int(raw_input)
-            except ValueError:
-                print("Invalid input. Please enter a number 0-10.")
-                continue
-        else:
-            scen_num = scenario_choice
+    if scenario_choice is not None:
+        # CLI direct execution mode (e.g. --scenario 1)
+        scenario = registry.get_scenario_by_legacy_number(scenario_choice)
+        if not scenario:
+            print(f"[ERROR] Unknown scenario number: {scenario_choice}")
+            return
+        print(f"\n[Step 7/9] Direct Execution of Scenario: '{scenario.name}'")
+        print(f"[Step 8/9] Executing '{scenario.name}' via SailPoint ISC REST APIs...")
+        report_item = scenario.execute(ctx)
+        if report_item and report_gen:
+            report_gen.add_record(report_item)
+        if report_item:
+            print(f"\n[Step 9/9] Verify Provisioning Outcome & Record Execution Result")
+            print(f"Scenario '{report_item.scenario}' Result: [{report_item.final_status}]")
+            for check in report_item.validation_checks:
+                mark = "PASS" if check.get("passed") else "FAIL"
+                print(f"  - [{mark}] {check.get('check')}: {check.get('details')}")
+        return
 
-        if scen_num == 0:
-            break
-
-        print(f"\n[Step 8/9] Executing Chosen Scenario via SailPoint ISC REST APIs...")
-        # Refresh identity data before each test
-        fresh_user = get_identity_by_id(user.get("id")) or user
-
-        if scen_num == 1:
-            item = run_create_account(fresh_user, source, profile_id, interactive=True)
-        elif scen_num == 2:
-            item = run_enable_account(fresh_user, source, profile_id, interactive=True)
-        elif scen_num == 3:
-            item = run_disable_account(fresh_user, source, profile_id, interactive=True)
-        elif scen_num == 4:
-            item = run_role_request(fresh_user, source, profile_id=profile_id, interactive=True)
-        elif scen_num == 5:
-            item = run_termination(fresh_user, source, profile_id, interactive=True)
-        elif scen_num == 6:
-            item = run_leave_of_absence(fresh_user, source, profile_id, interactive=True)
-        elif scen_num == 7:
-            item = run_skp(fresh_user, source, profile_id, interactive=True)
-        elif scen_num == 8:
-            item = run_emergency_access_removal(fresh_user, source, profile_id, interactive=True)
-        elif scen_num == 9:
-            print("\n>>> Running Full Lifecycle Demonstration across all states...")
-            # Demo sequence
-            demo_sequence = [
-                run_create_account,
-                run_skp,
-                run_leave_of_absence,
-                run_emergency_access_removal,
-                run_termination,
-            ]
-            for fn in demo_sequence:
-                curr_user = get_identity_by_id(user.get("id")) or user
-                sub_item = fn(curr_user, source, profile_id, interactive=False, force_confirmed=True)
-                if report_gen:
-                    report_gen.add_record(sub_item)
-                print(f"  * {sub_item.scenario}: {sub_item.final_status}")
-            break
-        elif scen_num == 10:
-            print("\n>>> Retrieving Identity Details, Correlated Accounts & Source Attributes...")
-            print("\n" + format_identity_details_view(fresh_user) + "\n")
-            accs = get_detailed_accounts_for_identity(fresh_user.get("id"))
-            display_account_drilldown(accs, identity_name=fresh_user.get("displayName"), interactive=True)
-            continue
-        else:
-            print("Invalid selection.")
-            continue
-
-        if report_gen and scen_num != 9:
-            report_gen.add_record(item)
-
-        # Step 9: Print scenario outcome and validation details
-        print(f"\n[Step 9/9] Verify Provisioning Outcome & Record Execution Result")
-        print(f"Scenario '{item.scenario}' Result: [{item.final_status}]")
-        for check in item.validation_checks:
-            mark = "PASS" if check.get("passed") else "FAIL"
-            print(f"  - [{mark}] {check.get('check')}: {check.get('details')}")
-
-        if scenario_choice is not None:
-            break
-
-        repeat = input("\nWould you like to execute another scenario on this user? (y/n): ").strip().lower()
-        if repeat != "y":
-            break
+    # Interactive categorized menu mode
+    menu_manager = MenuManager(ctx)
+    menu_manager.run_main_menu()
 
 
 def main():
