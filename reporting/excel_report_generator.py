@@ -784,3 +784,4 @@ class AnalyticalExcelReportGenerator:
                             max_len = len(line)
             # Apply bounded column width
             ws.column_dimensions[col_letter].width = max(12, min(max_len + 4, 60))
+

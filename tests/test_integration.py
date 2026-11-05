@@ -206,6 +206,59 @@ class TestSailPointADAutomation(unittest.TestCase):
         menu = MenuManager(ctx)
         self.assertIsNotNone(menu.ctx)
 
+    def test_11_event_fetching_options(self):
+        """Milestone 15: Test event fetching service with 3 options and formatting."""
+        from sailpoint.events import (
+            fetch_identity_events,
+            extract_event_source,
+            get_correlated_sources_for_identity,
+            format_events_table,
+            format_single_event_card,
+        )
+        from scenarios.inspection.view_event_attributes import ViewEventAttributesScenario
+        from core.context import ExecutionContext
+
+        identities = search_identities("Yuki", limit=1)
+        self.assertTrue(len(identities) > 0)
+        user = identities[0]
+
+        # Option 1: Last 10 events
+        ev10 = fetch_identity_events(user["id"], user.get("displayName") or user.get("name"), limit=10)
+        self.assertIsInstance(ev10, list)
+        self.assertLessEqual(len(ev10), 10)
+
+        # Option 2: Filter by source
+        ev_filtered = fetch_identity_events(
+            user["id"], user.get("displayName") or user.get("name"), limit=10, source_filter="AD_Demo_Source"
+        )
+        self.assertIsInstance(ev_filtered, list)
+
+        # Option 3: All events
+        ev_all = fetch_identity_events(user["id"], user.get("displayName") or user.get("name"), limit=250)
+        self.assertIsInstance(ev_all, list)
+
+        # Helper formatting checks
+        tbl = format_events_table(ev10, "Test Table")
+        self.assertIn("TEST TABLE", tbl)
+
+        if ev10:
+            card = format_single_event_card(ev10[0])
+            self.assertIn("EVENT DETAILS", card)
+            src_extracted = extract_event_source(ev10[0])
+            self.assertIsInstance(src_extracted, str)
+
+        # Test scenario execution in non-interactive mode
+        ctx = ExecutionContext(
+            identity=user,
+            source={"id": "src-1", "name": "AD_Demo_Source"},
+            profile_id="prof-1",
+            interactive=False,
+        )
+        scen = ViewEventAttributesScenario()
+        rep = scen.execute(ctx)
+        self.assertEqual(rep.final_status, "SUCCESS")
+        self.assertGreater(len(rep.validation_checks), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
